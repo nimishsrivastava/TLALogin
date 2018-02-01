@@ -9,24 +9,6 @@ import {
     StyleSheet,
 } from 'react-native';
 
-returnData= (page) => {
-    this.props.navigation.navigate(page);
-}
-
-componentWillMount = () => {
-    let value = AsyncStorage.getItem('myAccessToken')
-        .then((value) => {
-            if(value!= null){
-                alert('no access')
-                alert('no access')
-
-            }
-            else{
-                this.props.navigation.navigate('Validation')
-            }
-        })
-}
-
 const NavigationTab = TabNavigator({
     Movies: {
         screen: Movies,

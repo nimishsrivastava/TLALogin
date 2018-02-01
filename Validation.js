@@ -10,6 +10,7 @@ import {
     AsyncStorage,
     ImageBackground,
     ToastAndroid,
+    NetInfo,
 
 } from 'react-native';
 
@@ -39,113 +40,152 @@ export default class App extends Component<{}> {
     }
 
     componentWillMount(){
-        let value = AsyncStorage.getItem('myAccessToken')
-        .then((value)=> {if (value == null){
-            //alert("not logged in...No access token found.")
-            this.setState({isVisible: false})
-        }
-        else{
-            this.setState({isVisible: true, uid: 'yael.dvori@bayer.com', pwd:'password'})
-            this.login()
-             //alert(value)
-        }})
+        NetInfo.isConnected.fetch().then(isConnected => {
+            if (isConnected) {
+                AsyncStorage.getItem('myAccessToken')
+                    .then((value) => {
+                        //alert(value)
+                        if (value == null) {
+                            //alert("not logged in...No access token found.")
+                            this.setState({isVisible: false})
+                        }
+                        else {
+                            //alert(value+ 'val')
+                            this.setState({isVisible: true, uid: 'yael.dvori@bayer.com', pwd: 'password'})
+                            this.props.navigation.navigate('TabNav')
+
+                        }
+                    })
+            }
+            else {
+                AsyncStorage.getItem('myAccessToken')
+                    .then((value) => {
+                        if (value == null) {
+                            //alert("not logged in...No access token found.")
+                            this.setState({isVisible: false})
+                            ToastAndroid.show(
+                                'You need an active internet connection to login...',
+                                ToastAndroid.LONG,
+                                ToastAndroid.BOTTOM
+                            )
+                        }
+                        else {
+                            this.setState({isVisible: true, uid: 'yael.dvori@bayer.com', pwd: 'password'})
+                            this.props.navigation.navigate('TabNav')
+                            //alert(value)
+                        }
+                    })
+            }
+        });
+        //NetInfo.isConnected.addEventListener('connectionChange',this.handleConChange);
     }
 
-    deleteToken= () => {
-        AsyncStorage.removeItem('myAccessToken')
-        alert('Access token deleted')
-        this.setState({isVisible: false, uid:'', psw:''})
+    handleConChange = () =>{
+        NetInfo.isConnected.fetch().then(isConnected => {
+
+        });
     }
 
     login = () =>{
+        NetInfo.isConnected.fetch().then(isConnected => {
+            if(isConnected) {
+                const reg = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+                if (reg.test(this.state.uid) == true && this.state.pwd != '') {
+                    const hash = Base64.encode('bayer:bayer#123')
+                    var formData = new FormData()
+                    formData.append('grant_type', 'password');
+                    formData.append('scope', 'webclient');
+                    formData.append('username', this.state.uid);
+                    formData.append('password', this.state.pwd);
 
-        const reg = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-        if (reg.test(this.state.uid) == true && this.state.pwd != '') {
-            const hash = Base64.encode('bayer:bayer#123')
-            var formData = new FormData()
-            formData.append('grant_type', 'password');
-            formData.append('scope', 'webclient');
-            formData.append('username', this.state.uid);
-            formData.append('password', this.state.pwd);
 
+                    return fetch('http://13.127.76.18:8080/digitrial/oauth/token', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Basic ${hash}`,
+                            'Accept': 'application/json',
+                            'Content-Type': 'multipart/form-data',
+                        },
+                        body: formData,
 
-            return fetch('http://13.127.76.18:8080/digitrial/oauth/token', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Basic ${hash}`,
-                    'Accept': 'application/json',
-                    'Content-Type': 'multipart/form-data',
-                },
-                body: formData,
+                    }).then((response) => {
+                        //alert (JSON.stringify(response.json()));
+                        if (response.status === 200) {
+                            //alert('success')
+                            return response.json();
+                        }
+                        else if (response.status === 401) {
+                            ToastAndroid.show(
+                                'Your email id and password combination does not exists...',
+                                ToastAndroid.LONG,
+                                ToastAndroid.BOTTOM
+                            );
+                            return 'nCon'
+                        }
+                        else {
+                            //alert(response.status)
+                            ToastAndroid.show(
+                                'error code: ' + response.status + 'Its no you, its us. Something went wrong on api server! :(',
+                                ToastAndroid.LONG,
+                                ToastAndroid.BOTTOM
+                            );
+                            return 'nCon'
+                        }
+                    }).then((responseJson) => {
+                        if (responseJson != 'nCon') {
+                            this.setState({aToken: responseJson.access_token, isVisible: true});
+                            AsyncStorage.setItem('myAccessToken', this.state.aToken)
+                                .then(()=> {
+                                    //alert(this.state.aToken + '  logged in');
+                                    this.props.navigation.navigate('TabNav')
+                                })
+                        }
 
-            }).then((response) => {
-                //alert (JSON.stringify(response.json()));
-                if (response.status === 200) {
-                    //alert('success')
-                    return response.json();
+                    }).catch((error) => {
+                        //JSON.stringify(alert(error));
+                    });
                 }
-                else if(response.status === 401){
+                else if (reg.test(this.state.uid) == true && this.state.pwd == '') {
                     ToastAndroid.show(
-                        'Your email id and password combination does not exists...',
+                        'empty password...',
                         ToastAndroid.LONG,
                         ToastAndroid.BOTTOM
                     );
-                    return 'nCon'
+                }
+                else if (reg.test(this.state.uid) == false && this.state.pwd == '') {
+                    ToastAndroid.show(
+                        'invalid id, empty password...',
+                        ToastAndroid.LONG,
+                        ToastAndroid.BOTTOM
+                    );
+                }
+                else if (reg.test(this.state.uid) == false && this.state.pwd != '') {
+                    ToastAndroid.show(
+                        'invalid id...',
+                        ToastAndroid.LONG,
+                        ToastAndroid.BOTTOM
+                    );
                 }
                 else {
-                    //alert(response.status)
                     ToastAndroid.show(
-                        'error code: '+ response.status +'Its no you, its us. Something went wrong on api server! :(',
+                        'something you entered is wrong. Go figure...',
                         ToastAndroid.LONG,
                         ToastAndroid.BOTTOM
                     );
-                    return 'nCon'
                 }
-            }).then((responseJson) => {
-                if(responseJson!='nCon') {
-                    this.setState({aToken: responseJson.access_token, isVisible: true});
-                    AsyncStorage.setItem('myAccessToken', this.state.aToken);
-                    //alert(this.state.aToken + '  logged in');
-                    this.props.navigation.navigate('TabNav')
-                }
-
-            }).catch((error) => {
-                //JSON.stringify(alert(error));
-            });
-        }
-        else if (reg.test(this.state.uid) == true && this.state.pwd == '') {
-            ToastAndroid.show(
-                'empty password...',
-                ToastAndroid.LONG,
-                ToastAndroid.BOTTOM
-            );
-        }
-        else if (reg.test(this.state.uid) == false && this.state.pwd == '') {
-            ToastAndroid.show(
-                'invalid id, empty password...',
-                ToastAndroid.LONG,
-                ToastAndroid.BOTTOM
-            );
-        }
-        else if (reg.test(this.state.uid) == false && this.state.pwd != '') {
-            ToastAndroid.show(
-                'invalid id...',
-                ToastAndroid.LONG,
-                ToastAndroid.BOTTOM
-            );
-        }
-        else {
-            ToastAndroid.show(
-                'something you entered is wrong. Go figure...',
-                ToastAndroid.LONG,
-                ToastAndroid.BOTTOM
-            );
-        }
+            }
+            else{
+                ToastAndroid.show(
+                    'You need an active internet connection to login...',
+                    ToastAndroid.LONG,
+                    ToastAndroid.BOTTOM
+                )
+            }
+        });
     }
 
     render() {
 
-        let {isVisible} = this.state;
         return (
             //<View style={styles.container}>
                 <ImageBackground style={styles.BG} source={require('./images/bg.jpg')}>

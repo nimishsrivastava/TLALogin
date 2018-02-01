@@ -6,10 +6,6 @@ import {
     View,
     ScrollView,
     TouchableOpacity,
-    FlatList,
-    ListView,
-    ActivityIndicator,
-    RefreshControl,
     NetInfo,
     Image,
     AsyncStorage, ToastAndroid,
@@ -36,41 +32,66 @@ export default class App extends Component<{}> {
     }
 
     logout=() => {
-        const hash = Base64.encode('bayer:bayer#123')
-        let value = AsyncStorage.getItem('myAccessToken')
-        .then((value)=> {
-
-            return fetch('http://13.127.76.18:8080/digitrial/api/user/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${value}`,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-            }).then((response) => {
-                //alert (JSON.stringify(response.json()));
-                if (response.status === 200) {
-                    //alert('successfully logged out')
-                    ToastAndroid.show(
-                        'logged out...',
-                        ToastAndroid.SHORT,
-                        ToastAndroid.BOTTOM
-                    );
-                } else {
-                    alert(JSON.stringify(response))
-                }
-            }).then(() =>{
-                AsyncStorage.removeItem('myAccessToken').then(() =>{
-                    //alert('here')
-                    this.props.navigation.navigate('Login')
+        NetInfo.isConnected.fetch().then(isConnected => {
+            if(isConnected) {
+                const resetAction = NavigationActions.reset({
+                    index: 0,
+                    actions: [
+                        NavigationActions.navigate({routeName: 'Login'})
+                    ]
                 })
-            })
-        })
+                AsyncStorage.getItem('myAccessToken')
+                    .then((value) => {
+                        return fetch('http://13.127.76.18:8080/digitrial/api/user/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${value}`,
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                            },
+                        }).then((response) => {
+                            //alert (JSON.stringify(response.json()));
+                            if (response.status === 200) {
+                                //alert('successfully logged out')
+                                ToastAndroid.show(
+                                    'logged out...',
+                                    ToastAndroid.SHORT,
+                                    ToastAndroid.BOTTOM
+                                );
+                            } else {
+                                ToastAndroid.show(
+                                    JSON.stringify(response.status),
+                                    ToastAndroid.SHORT,
+                                    ToastAndroid.BOTTOM
+                                );
+                            }
+                        }).then(() => {
+                            AsyncStorage.removeItem('myAccessToken').then(() => {
+                                //alert('here')
+                                this.props.navigation.dispatch(resetAction);
+                            })
+                        }).catch((error) => {
+                            //JSON.stringify(alert(error));
+                            ToastAndroid.show(
+                                'Something went wrong. Unable to sign out...',
+                                ToastAndroid.SHORT,
+                                ToastAndroid.BOTTOM
+                            )
+                        });
+                    })
+            }
+            else{
+                ToastAndroid.show(
+                    'Couldn\'t log out. Please check your internet connection',
+                    ToastAndroid.SHORT,
+                    ToastAndroid.BOTTOM
+                )
+            }
+        });
     }
 
     render() {
 
-        const {isLoading} = this.state;
         return (
             <View style={styles.container}>
                 <View style={styles.header}>
