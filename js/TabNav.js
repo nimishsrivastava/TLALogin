@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import {StackNavigator, TabNavigator,} from 'react-navigation';
 import Movies from "./Movies";
 import Profile from "./Profile";
-import Validation from "./Validation"
 import {
     AsyncStorage,
     Image,
@@ -14,18 +13,14 @@ const NavigationTab = TabNavigator({
         screen: Movies,
         navigationOptions: {
             tabBarLabel: 'Movies',
-            tabBarIcon: () => <Image source={require('./images/moview.png')} style={styles.icon}  />
+            tabBarIcon: () => <Image source={require('../images/moview.png')} style={styles.icon}  />
         },
     },
     Profile: {
          screen: Profile,
-        // screen: StackNavigator({ Profile: { screen: Profile }, Login: {screen: Validation}},{
-        //     headerMode: 'none'
-        // }),
-
-        navigationOptions: {
+         navigationOptions: {
             tabBarLabel: 'Profile',
-            tabBarIcon: () => <Image source={require('./images/profilew.png')} style={styles.icon}  />
+            tabBarIcon: () => <Image source={require('../images/profilew.png')} style={styles.icon}  />
 
         },
     },

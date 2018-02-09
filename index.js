@@ -1,8 +1,7 @@
 import { AppRegistry } from 'react-native';
 import {StackNavigator,} from 'react-navigation';
-import Validation from './Validation';
-import TabNav from './TabNav';
-import Profile from './Profile'
+import Validation from './js/Validation';
+import TabNav from './js/TabNav';
 
 export const NavigationStack = StackNavigator({
     Login: {

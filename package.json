@@ -8,18 +8,30 @@
   },
   "dependencies": {
     "base-64": "^0.1.0",
+    "jest-react-native": "^18.0.0",
+    "mock-async-storage": "^2.0.2",
     "react": "16.2.0",
     "react-native": "0.52.0",
     "react-native-push-notification": "^3.0.2",
     "react-navigation": "^1.0.0-beta.27"
   },
   "devDependencies": {
-    "babel-jest": "22.1.0",
+    "babel-jest": "^21.2.0",
     "babel-preset-react-native": "4.0.0",
-    "jest": "22.1.1",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^21.2.1",
+    "jest-fetch-mock": "^1.4.1",
     "react-test-renderer": "16.2.0"
   },
   "jest": {
-    "preset": "react-native"
+    "preset": "react-native",
+    "transformIgnorePatterns": [
+      "node_modules/(?!react-native|native-base|react-navigation)"
+    ],
+    "collectCoverage": true,
+    "moduleNameMapper": {
+      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/assetsTransformer.js",
+      "\\.(css|less)$": "<rootDir>/assetsTransformer.js"
+    }
   }
 }
