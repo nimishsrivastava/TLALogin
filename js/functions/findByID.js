@@ -1,6 +1,6 @@
 
 export function findById  (tree, testID) {
-    if(tree.props && tree.props.testID === testID) {
+    if(tree.props && tree.props.accessibilityLabel === testID) {
         return tree
     }
     if(tree.children && tree.children.length > 0)

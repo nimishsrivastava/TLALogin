@@ -14,7 +14,7 @@ import Base64 from 'base-64'
 
 import inputValidation from './functions/inputValidation'
 import checkConnection from "./functions/checkConnection";
-import fetchAPI from "./functions/fetchAPI";
+import backHandler from "./functions/backHandler";
 import loginFormData from "./functions/loginFormData";
 import asyncSetItem from "./functions/asyncSetItem"
 import asyncGetItem from "./functions/asyncGetItem"
@@ -28,8 +28,10 @@ export default class App extends Component<{}> {
             aToken:'',
         };
     }
+    static screenName = 'validation';
 
     componentWillMount(){
+        backHandler(App.screenName);
         checkConnection()
         NetInfo.isConnected.addEventListener(
             'connectionChange',
@@ -38,12 +40,21 @@ export default class App extends Component<{}> {
 
         asyncGetItem('myAccessToken')
             .then((value) => {
-                if (value != null) {
-                    //alert("not logged in...No access token found.")
-                    this.props.navigation.navigate('TabNav')
-                }
+                // if (value != null) {
+                //     //alert("not logged in...No access token found.")
+                //     this.props.navigation.navigate('TabNav')
+                // }
+                this.navigateIfAccessTokenFound(value);
             })
     }
+
+    navigateIfAccessTokenFound= (value)=>{
+        if (value != null) {
+            //alert("not logged in...No access token found.")
+            this.props.navigation.navigate('TabNav')
+        }
+    }
+
     showMessage= (isConnected) => {
         ToastAndroid.show(
             'You are now ' + (isConnected ? 'online' : 'offline') + '...',
@@ -54,27 +65,7 @@ export default class App extends Component<{}> {
 
     login = () => {
         checkConnection().then((isConnected) => {
-            if (isConnected) {
-                let validateInput = inputValidation(this.state.uid, this.state.pwd);
-                if (validateInput) {
-
-                    handleLogin(this.state.uid, this.state.pwd)
-                    .then((access_token)=>{
-                        asyncSetItem('myAccessToken', access_token)
-                            .then(() => {
-                                this.setState({aToken: asyncGetItem('myAccessToken') })
-                                this.props.navigation.navigate('TabNav')
-                            })
-                    })
-
-                }
-            }
-            else {
-                ToastAndroid.show(
-                    'You need an active internet connection to login...',
-                    ToastAndroid.LONG,
-                    ToastAndroid.BOTTOM
-                )}
+            this.proceedLogin(isConnected);
         }).catch=(error)=>{
             ToastAndroid.show(
                 error,
@@ -83,6 +74,32 @@ export default class App extends Component<{}> {
             )
         }
     };
+
+    proceedLogin=((isConnected)=>{
+        if (isConnected) {
+            let validateInput = inputValidation(this.state.uid, this.state.pwd);
+            this.proceedLogin1(validateInput);
+        }
+        else {
+            ToastAndroid.show(
+                'You need an active internet connection to login...',
+                ToastAndroid.LONG,
+                ToastAndroid.BOTTOM
+            )}
+    })
+
+    proceedLogin1=((validateInput)=>{
+        if (validateInput) {
+            handleLogin(this.state.uid, this.state.pwd)
+                .then((access_token)=>{
+                    asyncSetItem('myAccessToken', access_token)
+                        .then(() => {
+                            this.setState({aToken: asyncGetItem('myAccessToken') })
+                            this.props.navigation.navigate('TabNav')
+                        })
+                })
+        }
+    })
 
     handleUsernameChange = (uid) => {
         this.setState({uid:uid})
@@ -96,20 +113,20 @@ export default class App extends Component<{}> {
             //<View style={styles.container}>
                 <ImageBackground style={styles.BG} source={require('../images/bg.jpg')}>
                     <View style={styles.inContainer}>
-                        <Image testID={'logo'} source={require('../images/Logo.png')} style={styles.logo} />
+                        <Image accessibilityLabel={'logo'} source={require('../images/Logo.png')} style={styles.logo} />
                     </View>
 
                     <View style={styles.inContainer}>
                         <View style={styles.inContainer}>
                             <TextInput
-                                testID={'username'}
+                                accessibilityLabel={'username'}
                                 style={styles.input}
                                 placeholder="e-Mail"
                                 placeholderTextColor="rgb(200,200,200)"
                                 onChangeText={(uid) => this.handleUsernameChange(uid)}
                             />
                             <TextInput
-                                testID={'password'}
+                                accessibilityLabel={'password'}
                                 style={styles.input}
                                 placeholder="Password"
                                 placeholderTextColor="rgb(200,200,200)"
@@ -119,7 +136,7 @@ export default class App extends Component<{}> {
                         </View>
                         <View style={styles.inContainer}>
                             <TouchableOpacity style={styles.button} onPress={this.login.bind()}>
-                                <Text testID={'loginButton'} style={{fontSize:18, color:'white'}}>Login</Text>
+                                <Text accessibilityLabel={'loginButton'} style={{fontSize:18, color:'white'}}>Login</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

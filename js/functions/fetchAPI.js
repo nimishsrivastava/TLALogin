@@ -3,7 +3,6 @@ import {
     ToastAndroid,
 } from 'react-native';
 
-
 export default fetchAPI = (url, method, acceptType, contentType, hash, formData, message401) => {
     return  new Promise((resolve) =>{
         fetch(url, {

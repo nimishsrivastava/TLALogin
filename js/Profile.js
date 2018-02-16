@@ -9,15 +9,13 @@ import {
     NetInfo,
     Image,
     AsyncStorage, ToastAndroid,
-
-
 } from 'react-native';
 import {StackNavigator, TabNavigator, NavigationActions } from 'react-navigation';
 import asyncGetItem from "./functions/asyncGetItem"
 import Base64 from 'base-64'
 import checkConnection from "./functions/checkConnection";
 import fetchAPI from "./functions/fetchAPI";
-import asyncSetItem from "./functions/asyncSetItem";
+import backHandler from "./functions/backHandler";
 
 const instructions = Platform.select({
     ios: 'Press Cmd+R to reload,\n' +
@@ -33,51 +31,58 @@ export default class App extends Component<{}> {
 
         };
     }
+    static screenName = 'profile';
+
+    componentWillMount() {
+        // backHandler(App.screenName);
+    }
 
     logout=() => {
         checkConnection().then(isConnected => {
-            if(isConnected) {
-                const resetAction = NavigationActions.reset({
-                    index: 0,
-                    actions: [
-                        NavigationActions.navigate({routeName: 'Login'})
-                    ]
-                })
-                //alert('here')
-                asyncGetItem('myAccessToken')
-                    .then((value) => {
-                        return fetchAPI('http://13.127.76.18:8080/digitrial/api/user/logout','POST', 'application/json', 'application/json', `Bearer ${value}`,'','response status: 401')
-                            .then((responseJson)=>{
-                                ToastAndroid.show(
-                                    'logged out...',
-                                    ToastAndroid.LONG,
-                                    ToastAndroid.BOTTOM
-                                )
-                            })
-                            .then(() => {
-                                AsyncStorage.removeItem('myAccessToken').then(() => {
-                                    //alert('here')
-                                    this.props.navigation.dispatch(resetAction);
-                                })
-                            }).catch((error) => {
-                                //JSON.stringify(alert(error));
-                                ToastAndroid.show(
-                                    'Something went wrong. Unable to sign out...',
-                                    ToastAndroid.SHORT,
-                                    ToastAndroid.BOTTOM
-                                )
-                            });
-                    })
-            }
-            else{
-                ToastAndroid.show(
-                    'Couldn\'t log out. Please check your internet connection',
-                    ToastAndroid.SHORT,
-                    ToastAndroid.BOTTOM
-                )
-            }
+            this.proceedLogout(isConnected);
         });
     }
+
+    proceedLogout=((isConnected)=>{
+        if(isConnected) {
+            const resetAction = NavigationActions.reset({
+                index: 0,
+                actions: [
+                    NavigationActions.navigate({routeName: 'Login'})
+                ]
+            })
+            //alert('here')
+            asyncGetItem('myAccessToken')
+                .then((value) => {
+                    return fetchAPI('http://13.127.76.18:8080/digitrial/api/user/logout','POST', 'application/json', 'application/json', `Bearer ${value}`,'','response status: 401')
+                        .then((responseJson)=>{
+                            ToastAndroid.show(
+                                'logged out...',
+                                ToastAndroid.LONG,
+                                ToastAndroid.BOTTOM
+                            )
+                            AsyncStorage.removeItem('myAccessToken').then(() => {
+                                //alert('here')
+                                this.props.navigation.dispatch(resetAction);
+                            })
+                        }).catch((error) => {
+                            //JSON.stringify(alert(error));
+                            ToastAndroid.show(
+                                'Something went wrong. Unable to sign out...',
+                                ToastAndroid.SHORT,
+                                ToastAndroid.BOTTOM
+                            )
+                        });
+                })
+        }
+        else{
+            ToastAndroid.show(
+                'Couldn\'t log out. Please check your internet connection',
+                ToastAndroid.SHORT,
+                ToastAndroid.BOTTOM
+            )
+        }
+    })
 
     render() {
 
@@ -99,7 +104,7 @@ export default class App extends Component<{}> {
                     </ScrollView>
                 </View>
                 <View style={{alignItems:'center', justifyContent:'center',}}>
-                    <TouchableOpacity testID="logoutButton" style={styles.button} onPress={this.logout.bind()}>
+                    <TouchableOpacity accessibilityLabel="logoutButton" style={styles.button} onPress={this.logout.bind()}>
                         <Text >Logout</Text>
                     </TouchableOpacity>
                 </View>

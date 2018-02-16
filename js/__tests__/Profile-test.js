@@ -16,3 +16,18 @@ it('should render logout button', () => {
         .toJSON();
     expect(findById(tree, 'logoutButton')).toBeDefined()
 })
+
+it('should call logout function', ()=>{
+    let profileComponent = renderer.create(<Profile/>).getInstance()
+    profileComponent.logout();
+})
+
+it('should call proceed logout function if connected', ()=>{
+    let profileComponent = renderer.create(<Profile/>).getInstance()
+    profileComponent.proceedLogout(true);
+})
+
+it('should call proceed logout function if not connected', ()=>{
+    let profileComponent = renderer.create(<Profile/>).getInstance()
+    profileComponent.proceedLogout(false);
+})

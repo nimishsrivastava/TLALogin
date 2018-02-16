@@ -11,7 +11,9 @@ import {
     NetInfo,
     Image,
     Modal,
-    ToastAndroid, AsyncStorage,
+    ToastAndroid,
+    AsyncStorage,
+
 } from 'react-native';
 
 import Base64 from 'base-64'
@@ -20,8 +22,10 @@ import fetchAPI from "./functions/fetchAPI";
 import asyncSetItem from "./functions/asyncSetItem"
 import asyncGetItem from "./functions/asyncGetItem"
 import displayModal from "./functions/displayModal"
+import backHandler from "./functions/backHandler";
 
 export default class App extends Component<{}> {
+
     constructor(props) {
         super(props);
 
@@ -35,15 +39,14 @@ export default class App extends Component<{}> {
         };
 
     }
-
+    static screenName = 'movies';
     _onRefresh() {
         this.setState({refreshing: true, isLoading: true, });
         this.handleConnection()
-        // .then(() => {
-        // });
     }
 
     componentWillMount() {
+        backHandler(App.screenName)
         NetInfo.isConnected.addEventListener(
             'connectionChange',
             this.handleConnection
@@ -63,48 +66,55 @@ export default class App extends Component<{}> {
     handleConnection= () => {
         checkConnection()
         .then( (isConnected)=> {
-            if (isConnected) {
-                this.fetchMovies();
-                this.setState({refreshing: false, isLoading: false,});
-            }
-            else{
-                asyncGetItem('MovieList')
-                    .then((value) => {
-                        if(value==null){
-                            ToastAndroid.show(
-                                'you need an active internet connection to fetch movies...',
-                                ToastAndroid.LONG,
-                                ToastAndroid.BOTTOM
-                            )
-                            this.setState({refreshing: false, isLoading: false,});
-                        }
-                        else{
-                            ToastAndroid.show(
-                                'you are offline...',
-                                ToastAndroid.LONG,
-                                ToastAndroid.BOTTOM
-                            )
-                            asyncGetItem('MovieList')
-                                .then((myArray) => {
-                                    //alert(JSON.parse(myArray))
-                                    this.setState({data: JSON.parse(myArray), isLoading: false});
-                                    this.setState({refreshing: false, isLoading: false,});
-                                })
-
-                        }
-                    })
-                    .catch((error) => {
-                        ToastAndroid.show(
-                            'you need an active internet connection...',
-                            ToastAndroid.LONG,
-                            ToastAndroid.BOTTOM
-                        )
-                    });
-            }
+            this.proceedHandleConnection(isConnected)
         })
-
-
     }
+
+    proceedHandleConnection=((isConnected)=>{
+        if (isConnected) {
+            this.fetchMovies();
+            this.setState({refreshing: false, isLoading: false,});
+        }
+        else{
+            asyncGetItem('MovieList')
+                .then((value) => {
+                    this.proceedHandleConnectionIfNotConnected(value)
+                })
+                .catch((error) => {
+                    ToastAndroid.show(
+                        'you need an active internet connection...',
+                        ToastAndroid.LONG,
+                        ToastAndroid.BOTTOM
+                    )
+                });
+        }
+    })
+
+    proceedHandleConnectionIfNotConnected=((value)=>{
+        if(value==null){
+            ToastAndroid.show(
+                'you need an active internet connection to fetch movies...',
+                ToastAndroid.LONG,
+                ToastAndroid.BOTTOM
+            )
+            this.setState({refreshing: false, isLoading: false,});
+        }
+        else{
+            ToastAndroid.show(
+                'you are offline...',
+                ToastAndroid.LONG,
+                ToastAndroid.BOTTOM
+            )
+            asyncGetItem('MovieList')
+                .then((myArray) => {
+                    //alert(JSON.parse(myArray))
+                    this.setState({data: JSON.parse(myArray), isLoading: false});
+                    this.setState({refreshing: false, isLoading: false,});
+                })
+        }
+    })
+
+
 
     fetchMovies= () =>{
         fetchAPI('https://facebook.github.io/react-native/movies.json')
@@ -163,7 +173,7 @@ export default class App extends Component<{}> {
                         />
                     )}
                     <FlatList
-                        testID={"list"}
+                        accessibilityLabel={"list"}
                         refreshControl={
                             <RefreshControl
                                 refreshing={this.state.refreshing}
